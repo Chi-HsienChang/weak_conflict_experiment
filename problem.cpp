@@ -5,6 +5,10 @@
 
 using namespace std;
 
+#define TRAP_K 4
+#define TRAP_high 4
+#define TRAP_low 3
+
 
 double calculate_segment_onemax_weak(const string& segment, const string& method) {
         double weak_fiteness = 0;
@@ -20,16 +24,27 @@ double calculate_segment_fitness(const string& segment, const string& method) {
     double result = 0.0;
     if (method == "trap") {
         int ones = count(segment.begin(), segment.end(), '1');
+        // cout << "segment.length(): " << segment.length() << endl;
         if (ones == segment.length()) {
-            return 4.0;
+            return TRAP_high;
         } else if (ones == 0) {
-            return 3.0;
+            return TRAP_low;
         } else {
-            result = 3.0 - (ones * 3.0 / (segment.length() - 1));
-            if (result < 0)
-            {
-                return 0.0;
-            }
+            result = ((TRAP_K-1) - ones) * (TRAP_low / ((TRAP_K-1) - 1));
+
+
+            return result;
+        }
+    }else if (method == "zerotrap") {
+        int zeros = count(segment.begin(), segment.end(), '0');
+        // cout << "segment.length(): " << segment.length() << endl;
+        if (zeros == segment.length()) {
+            return TRAP_high;
+        } else if (zeros == 0) {
+            return TRAP_low;
+        } else {
+            result = ((TRAP_K-1) - zeros) * (TRAP_low / ((TRAP_K-1) - 1));
+
 
             return result;
         }
@@ -59,20 +74,33 @@ double calculate_fitness(const string& chromosome, const string& method) {
         return calculate_segment_fitness(chromosome, "niah");
     } else if (method == "ctrap" || method == "cniah") {
 
-        if (chromosome.length() % 4 != 0) {
-            cerr << "Error: Chromosome length must be a multiple of 4 for " << method << endl;
+        if (chromosome.length() % TRAP_K != 0) {
+            cerr << "Error: Chromosome length must be a multiple of TRAP_K for " << method << endl;
             exit(1);
         }
-
-        int segment_length = 4;
+        // Calculate fitness in segments of TRAP_K
+        size_t num_segments = chromosome.length() / TRAP_K;
         double total_fitness = 0.0;
-        for (size_t i = 0; i < chromosome.length(); i += segment_length) {
-            string segment = chromosome.substr(i, min(segment_length, static_cast<int>(chromosome.length() - i)));
+        for (size_t i = 0; i < num_segments; ++i) {
+            string segment = chromosome.substr(i * TRAP_K, TRAP_K);
             total_fitness += calculate_segment_fitness(segment, method.substr(1));
         }
         return total_fitness;
     } else if (method == "cyctrap") {
-        int segment_length = 4;
+        if (chromosome.length() % (TRAP_K-1) != 0) {
+            cerr << "Error: Chromosome length must be a multiple of TRAP_K-1 for cyctrap" << endl;
+            exit(1);
+        }
+
+        if (chromosome.length() <= 5)
+        {
+            cerr << "Error: Chromosome length must be greater than 5 for cyctrap" << endl;
+            exit(1);
+        }
+        
+      
+        
+        int segment_length = TRAP_K;
         int overlap = 1;
         double total_fitness = 0.0;
         for (size_t i = 0; i < chromosome.length(); i += segment_length - overlap) {
@@ -84,8 +112,33 @@ double calculate_fitness(const string& chromosome, const string& method) {
             }
 
             total_fitness += calculate_segment_fitness(segment, "trap");
+        }
+        return total_fitness;
 
-            if (i + segment_length >= chromosome.length() + overlap) {
+    } else if (method == "1-0_cyctrap") {
+        string& chromosome_deep_copy = const_cast<string&>(chromosome);
+        chromosome_deep_copy[0] = '1';
+
+        int segment_length = TRAP_K;
+        int overlap = 1;
+        double total_fitness = 0.0;
+        int time = 0;
+        for (size_t i = 0; i < chromosome_deep_copy.length(); i += segment_length - overlap) {
+            string segment;
+            if (i + segment_length <= chromosome_deep_copy.length()) {
+                segment = chromosome_deep_copy.substr(i, segment_length);
+            } else {
+                segment = chromosome_deep_copy.substr(i) + chromosome_deep_copy.substr(0, segment_length - (chromosome_deep_copy.length() - i));
+            }
+
+            if (time % 2 == 0) {
+                total_fitness += calculate_segment_fitness(segment, "trap");
+            }else if(time % 2 == 1)  {
+                total_fitness += calculate_segment_fitness(segment, "zerotrap");
+            }
+            time++;
+
+            if (i + segment_length >= chromosome_deep_copy.length() + overlap) {
                 break;
             }
         }

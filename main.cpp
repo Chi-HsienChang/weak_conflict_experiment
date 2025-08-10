@@ -28,6 +28,8 @@ int main(int argc, char* argv[]) {
         printf ("     LEADINGTRAPS   :  6\n");
         printf ("     MAX3SAT_RANDOM :  7\n");
         printf ("     MAX3SAT_XOR    :  8\n");
+        printf ("     1-0 CYCTRAP    :  9\n");
+        
         return 1;
     }
 
@@ -52,6 +54,7 @@ int main(int argc, char* argv[]) {
         case 6: all_chromosomes = generate_chromosomes(ell, "leadingtraps"); break;
         case 7: all_chromosomes = generate_chromosomes(ell, "max3sat_unit_and_random"); break;
         case 8: all_chromosomes = generate_chromosomes(ell, "max3sat_xor"); break;
+        case 9: all_chromosomes = generate_chromosomes(ell, "1-0_cyctrap"); break;
         default:
             cerr << "Unknown problem: " << problem << endl;
             return 1;
@@ -129,8 +132,11 @@ int main(int argc, char* argv[]) {
         cout << "chromosomes & fitness" << endl;
         cout << "====================" << endl;
 
+        int show_count = 0; 
         for (const auto& chom : chromosomes) {
             cout << chom.first << " " << chom.second << endl;
+            show_count++;
+            if (show_count >= 30) break;
         }
         cout << endl;
     }
