@@ -26,8 +26,8 @@ int main(int argc, char* argv[]) {
         printf ("     CNIAH          :  4\n");
         printf ("     LEADINGONES    :  5\n");
         printf ("     LEADINGTRAPS   :  6\n");
-        printf ("     MAX3SAT_RANDOM :  7\n");
-        printf ("     MAX3SAT_XOR    :  8\n");
+        printf ("     MAX3SAT_TEST   :  7\n");
+        printf ("     MAX3SAT_RANDOM :  8\n");
         printf ("     1-0 CYCTRAP    :  9\n");
         
         return 1;
@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
         case 5: all_chromosomes = generate_chromosomes(ell, "leadingones"); break;
         case 6: all_chromosomes = generate_chromosomes(ell, "leadingtraps"); break;
         case 7: all_chromosomes = generate_chromosomes(ell, "max3sat_unit_and_random"); break;
-        case 8: all_chromosomes = generate_chromosomes(ell, "max3sat_xor"); break;
+        case 8: all_chromosomes = generate_chromosomes(ell, "max3sat_random"); break;
         case 9: all_chromosomes = generate_chromosomes(ell, "1-0_cyctrap"); break;
         default:
             cerr << "Unknown problem: " << problem << endl;
@@ -171,6 +171,8 @@ int main(int argc, char* argv[]) {
         sort(chromosomes.begin(), chromosomes.end(), [](const auto& a, const auto& b) {
             return a.second > b.second; 
         });
+
+
         
         cout << "====================" << endl;
         cout << "chromosomes & fitness" << endl;
@@ -180,10 +182,18 @@ int main(int argc, char* argv[]) {
         for (const auto& chom : chromosomes) {
             cout << chom.first << " " << chom.second << endl;
             show_count++;
-            if (show_count >= 100) break;
+            if (show_count >= 2) break;
         }
         cout << endl;
+
+        if (chromosomes[0].second > chromosomes[1].second) {
+            cout << "global optimal is unique" << endl;
+        } else {
+            cout << "global optimal is not unique" << endl;
+        }
     }
+
+
     
     return 0;
 }

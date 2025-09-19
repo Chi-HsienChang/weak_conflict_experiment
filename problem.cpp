@@ -216,30 +216,131 @@ double calculate_fitness(const string& chromosome, const string& method) {
         return fiteness;
     } else if (method == "onemax_weak") {
         return calculate_onemax_weak(chromosome);
-    } else if (method == "max3sat_xor") {
+    }else if (method == "max3sat_random") {
         int n = chromosome.size();
         if (n < 2) {
-            cerr << "Error: max3sat_XOR requires chromosome size >= 2\n";
+            cerr << "Error: max3sat_random requires chromosome size >= 2\n";
             exit(1);
         }
 
-        vector<array<pair<int,bool>,3>> clauses;
-        clauses.push_back({ make_pair(0,true), make_pair(0,true), make_pair(0,true) });
-        for (int i = 0; i < n - 1; ++i) {
-            clauses.push_back({ make_pair(i,  true),
-                                make_pair(i+1,true),
-                                make_pair(i+1,true) });
-            clauses.push_back({ make_pair(i,  false),
-                                make_pair(i+1,false),
-                                make_pair(i+1,false) });
+        int num_clauses = 100;  // 子句數，可依需求調整
+
+        // 🔑 設定亂數種子，讓實驗可重現
+        static unsigned seed = std::random_device{}();
+        static std::mt19937 rng(seed);
+
+        // 印出 seed，只印一次
+        static bool initialized = false;
+        if (!initialized) {
+            cout << "=== Random 3SAT ===" << endl;
+            cout << "Seed = " << seed << endl;
+            initialized = true;
         }
 
-        static bool initialized = false;
+        std::uniform_int_distribution<int> var_dist(0, n-1);
+        std::uniform_int_distribution<int> sign_dist(0, 1);
 
-        if (!initialized){
-            initialized = true;
+        // 隨機生成子句
+        static std::vector<std::array<std::pair<int,bool>,3>> clauses;
+        if (clauses.empty()) {  // 只生成一次
+            for (int c = 0; c < num_clauses; ++c) {
+                std::array<std::pair<int,bool>,3> clause;
+                for (int j = 0; j < 3; j++) {
+                    int var = var_dist(rng);
+                    bool sign = sign_dist(rng);
+                    clause[j] = {var, sign};
+                }
+                clauses.push_back(clause);
+            }
 
-            cout << "===  clauses ===\n";
+            // 印出隨機生成的子句
+            for (auto& cl : clauses) {
+                cout << "(";
+                for (int i = 0; i < 3; i++) {
+                    int idx = cl[i].first;
+                    bool pos = cl[i].second;
+                    if (!pos) cout << "¬";
+                    cout << "x" << idx;
+                    if (i < 2) cout << " ∨ ";
+                }
+                cout << ")" << endl;
+            }
+            cout << endl;
+        }
+
+        // 計算滿足的子句數
+        int sat = 0;
+        for (auto& cl : clauses) {
+            bool clause_sat = false;
+            for (auto& lit : cl) {
+                bool val = (chromosome[lit.first] == '1');
+                if ((lit.second && val) || (!lit.second && !val)) {
+                    clause_sat = true;
+                    break;
+                }
+            }
+            if (clause_sat) ++sat;
+        }
+
+        return static_cast<double>(sat);
+    }
+        
+    else if (method == "max3sat_unit_and_random") {
+        int n = chromosome.size();
+        if (n < 1) {
+            cerr << "Error: max3sat_random_unique requires chromosome size >= 1\n";
+            exit(1);
+        }
+
+        int extra_clauses = n;  // 額外隨機子句數，可自行調整
+
+        static unsigned seed = std::random_device{}();
+        static std::mt19937 rng(seed);
+
+        static int built_n = -1;
+        static std::string target;
+        static std::vector<std::array<std::pair<int,bool>,3>> clauses;
+
+        if (built_n != n) {
+            built_n = n;
+            clauses.clear();
+
+            // === 生成唯一解 target ===
+            target.resize(n);
+            std::uniform_int_distribution<int> bit01(0, 1);
+            for (int i = 0; i < n; ++i) target[i] = bit01(rng) ? '1' : '0';
+
+            // === 強制 unit 子句 (唯一解) ===
+            for (int i = 0; i < n; ++i) {
+                bool pos = (target[i] == '1');
+                clauses.push_back({ std::make_pair(i, pos),
+                                    std::make_pair(i, pos),
+                                    std::make_pair(i, pos) });
+            }
+
+            // === 加上隨機 3 子句 ===
+            std::uniform_int_distribution<int> var_dist(0, n - 1);
+            for (int c = 0; c < extra_clauses; ++c) {
+                std::array<std::pair<int,bool>,3> cl;
+                for (int j = 0; j < 3; ++j) {
+                    int v = var_dist(rng);
+                    bool sign = bit01(rng);
+                    cl[j] = { v, sign };
+                }
+                clauses.push_back(cl);
+            }
+
+            // === 印出資訊 ===
+            cout << "=== Random 3SAT with UNIQUE optimum ===\n";
+            cout << "Seed = " << seed << "\n";
+            cout << "n = " << n 
+                << ", forced clauses = " << n 
+                << ", extra random clauses = " << extra_clauses << "\n";
+            cout << "Target = ";
+            for (char ch : target) cout << ch;
+            cout << "\n\n";
+
+            cout << "=== Clauses (CNF) ===\n";
             for (auto& cl : clauses) {
                 cout << "(";
                 for (int i = 0; i < 3; ++i) {
@@ -254,93 +355,7 @@ double calculate_fitness(const string& chromosome, const string& method) {
             cout << endl;
         }
 
-        int sat = 0;
-        for (auto& cl : clauses) {
-            bool clause_sat = false;
-            for (auto& lit : cl) {
-                bool val = (chromosome[lit.first] == '1');
-                if ((lit.second && val) || (!lit.second && !val)) {
-                    clause_sat = true;
-                    break;
-                }
-            }
-            if (clause_sat) ++sat;
-        }
-        return static_cast<double>(sat);
-    } else if (method == "max3sat_unit_and_random") {
-        int n = chromosome.length();
-
-        static bool initialized = false;
-        static vector<array<pair<int,bool>,3>> clauses;
-        if (!initialized) {
-            initialized = true;
-
-            random_device rd;
-            mt19937 gen(rd());
-            uniform_int_distribution<> coin(0,1);
-            uniform_int_distribution<> var_dist(0, n - 1);
-
-            vector<bool> target(n);
-            cout << "\ntarget = ";
-            for (int i = 0; i < n; ++i) {
-                target[i] = coin(gen);
-                cout << (target[i] ? '1' : '0');
-            }
-            cout << "\n\n";
-
-            cout << "=== unit clauses (" << n << ") ===" << endl;
-            for (int i = 0; i < n; ++i) {
-                bool pos = target[i];
-                clauses.push_back({
-                    make_pair(i, pos),
-                    make_pair(i, pos),
-                    make_pair(i, pos)
-                });
-                cout << "Clause " << i << ": "
-                    << (pos ? "" : "¬") << "x" << i
-                    << " ∨ " << (pos ? "" : "¬") << "x" << i
-                    << " ∨ " << (pos ? "" : "¬") << "x" << i
-                    << "\n";
-            }
-            cout << "\n";
-
-            int m_random = 4 * n;
-            cout << "=== random clauses (" << m_random << ") ===\n";
-            for (int k = 0; k < m_random; ++k) {
-                int a, b, c;
-                do {
-                    a = var_dist(gen);
-                    b = var_dist(gen);
-                    c = var_dist(gen);
-                } while (a == b || a == c || b == c);
-
-                int guarantee = coin(gen) % 3;
-                array<pair<int,bool>,3> cl;
-                int idxs[3] = {a, b, c};
-                for (int t = 0; t < 3; ++t) {
-                    int v = idxs[t];
-                    bool sign;
-                    if (t == guarantee) {
-                        sign = target[v];
-                    } else {
-                        sign = (coin(gen) == 1) ? target[v] : !target[v];
-                    }
-                    cl[t] = make_pair(v, sign);
-                }
-                clauses.push_back(cl);
-
-                cout << "Clause " << n + k << ": ";
-                for (int t = 0; t < 3; ++t) {
-                    auto [idx, pos] = cl[t];
-                    if (!pos) cout << "¬";
-                    cout << "x" << idx;
-                    if (t < 2) cout << " ∨ ";
-                }
-                cout << "\n";
-            }
-            cout << "========================================\n\n";
-        }
-
+        // === 評估滿足子句數 ===
         int sat = 0;
         for (auto& cl : clauses) {
             bool clause_sat = false;
@@ -355,6 +370,7 @@ double calculate_fitness(const string& chromosome, const string& method) {
         }
         return static_cast<double>(sat);
     }
+
    
     std::cerr << "Error: the problem does not exist!" << std::endl;
     exit(1);
