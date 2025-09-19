@@ -26,10 +26,32 @@ bool check_constrained_optima(
     const std::vector<std::pair<std::string, double>>& chromosomes
 );
 
+int check_constrained_optima_for_eg(
+    int target_index,
+    const std::vector<int>& combination,
+    const std::vector<int>& enumeration_original,
+    const std::vector<int>& combination_wo,
+    const std::vector<int>& enumeration_wo,
+    const std::vector<std::pair<std::string, double>>& chromosomes
+);
+
 int check_epistasis(
     int target_index,
     const std::vector<int>& combination,
     const std::vector<std::vector<int>>& enumerations,
+    const std::vector<std::pair<std::string, double>>& chromosomes
+);
+
+int check_eg(
+    int target_index,
+    const std::vector<int>& combination,
+    const std::vector<std::vector<int>>& enumerations,
+    const std::vector<std::pair<std::string, double>>& chromosomes
+);
+
+std::vector<int> eg(
+    int L,
+    int target_index,
     const std::vector<std::pair<std::string, double>>& chromosomes
 );
 

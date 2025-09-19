@@ -216,7 +216,7 @@ std::vector<int> weak(int L, int target_index, const vector<pair<string, double>
     
     for (int epi_size = 1; epi_size < L; epi_size++)
     {  
-        cout << "epi_size: " << epi_size << endl;
+        cout << "epi_size is " << epi_size << ": "<< endl;
         auto combinations = generateCombinations(L-1, epi_size, target_index); // combinations = { [1, 2], [1, 3], [2, 3] }
 
         for (auto& combination : combinations) // combination = [1, 2]

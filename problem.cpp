@@ -5,6 +5,10 @@
 
 using namespace std;
 
+// #define TRAP_K 5
+// #define TRAP_high 5
+// #define TRAP_low 4
+
 #define TRAP_K 4
 #define TRAP_high 4
 #define TRAP_low 3
@@ -92,9 +96,9 @@ double calculate_fitness(const string& chromosome, const string& method) {
             exit(1);
         }
 
-        if (chromosome.length() <= 5)
+        if (chromosome.length() <= TRAP_K)
         {
-            cerr << "Error: Chromosome length must be greater than 5 for cyctrap" << endl;
+            cerr << "Error: Chromosome length must be greater than TRAP_K for cyctrap" << endl;
             exit(1);
         }
         
@@ -116,8 +120,25 @@ double calculate_fitness(const string& chromosome, const string& method) {
         return total_fitness;
 
     } else if (method == "1-0_cyctrap") {
+            
+
+        static bool printed = false;  
+        if (!printed) {
+            if (chromosome.length() % (TRAP_K-1) != 0) {
+                cerr << "Error: Chromosome length must be a multiple of TRAP_K-1 for cyctrap" << endl;
+                exit(1);
+            }
+
+            cout << "k = "<< TRAP_K << endl;
+            cout << "m = "<< chromosome.length() / (TRAP_K-1) << endl;
+
+            printed = true; // 之後就不會再印
+        }
+
+
+
         string& chromosome_deep_copy = const_cast<string&>(chromosome);
-        chromosome_deep_copy[0] = '1';
+        // chromosome_deep_copy[0] = '1';
 
         int segment_length = TRAP_K;
         int overlap = 1;

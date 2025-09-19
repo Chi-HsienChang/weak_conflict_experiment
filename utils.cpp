@@ -50,6 +50,40 @@ std::pair<std::set<char>, std::vector<std::string>> check_constraint(int target_
     return {values_at_v, highest_fitness_chromosomes};
 }
 
+int check_constrained_optima_for_eg(int target_index, const vector<int>& combination, const vector<int>& enumeration_original, const vector<int>& combination_wo, const vector<int>& enumeration_wo, const vector<pair<string, double>>& chromosomes){
+    auto constrained_optima_original = check_constraint(target_index, combination, enumeration_original, chromosomes);
+    auto constrained_optima_flip = check_constraint(target_index, combination_wo, enumeration_wo, chromosomes);
+
+    if (constrained_optima_original.first != constrained_optima_flip.first) {
+
+        if (!constrained_optima_original.first.empty() && !constrained_optima_flip.first.empty()){
+
+            if (combination.size() == 1 && constrained_optima_original.first.size() == 1 && constrained_optima_flip.first.size() == 1){
+                // cout << "{";
+                // for (const auto& elem : combination) {
+                //     cout << elem << " ";
+                // }
+                // cout << "} -> "<< target_index << endl; 
+                return 1;  
+            }else if (combination.size() == 1 && (constrained_optima_original.first.size() != 1 || constrained_optima_flip.first.size() != 1)){
+                // cout << "{";
+                // for (const auto& elem : combination) {
+                //     cout << elem << " ";
+                // }
+                // cout << "} ->>> "<< target_index << endl;
+                return 2;  
+            }
+        }
+        else{
+            return 0;
+        }
+    }else{      
+        return 0;
+    }
+
+    return 0;
+}
+
 
 bool check_constrained_optima(int target_index, const vector<int>& combination, const vector<int>& enumeration_original, const vector<int>& combination_wo, const vector<int>& enumeration_wo, const vector<pair<string, double>>& chromosomes){
     auto constrained_optima_original = check_constraint(target_index, combination, enumeration_original, chromosomes);

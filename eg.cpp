@@ -70,6 +70,68 @@ int check_epistasis(int target_index, const vector<int>& combination, const vect
     return 0;
 }
 
+
+int check_eg(int target_index, const vector<int>& combination, const vector<vector<int>>& enumerations, const vector<pair<string, double>>& chromosomes) {
+
+    int eg_type;
+    // int condition_holds = 0;
+    for (int condition_index = 0; condition_index < combination.size(); condition_index++)
+    {
+        for (auto& enumeration : enumerations) // combination_locus = [1, 2] and enumeration_allele = { [0, 0], [0, 1], [1, 0], [1, 1]}
+        { 
+            auto enumeration_original = enumeration;
+        
+            auto combination_wo = combination;
+            auto enumeration_wo = enumeration;
+            combination_wo.erase(combination_wo.begin() + condition_index);
+            enumeration_wo.erase(enumeration_wo.begin() + condition_index);
+      
+            
+            eg_type = check_constrained_optima_for_eg(target_index, combination, enumeration_original, combination_wo, enumeration_wo, chromosomes);
+
+            if (eg_type != 0)
+            {
+                // condition_holds++;
+                break;
+            }       
+        }
+
+    }
+
+    return eg_type;
+}
+
+
+
+std::vector<int> eg(int L, int target_index, const vector<pair<string, double>>& chromosomes)
+{
+    std::vector<std::vector<std::vector<int>>> epi_set(L);
+    std::vector<int> epi_count(L, 0); 
+
+    std::vector<std::vector<int>> combinations;
+    std::vector<std::vector<int>> enumerations;
+
+    for (int i = 0; i < L; i++) {
+        combinations.push_back({i});
+    }
+
+
+    for (int i = 0; i < 2; i++) {
+        enumerations.push_back({i});
+    }
+    
+
+    int counter = 0;
+    for (auto& combination : combinations) 
+    { 
+        epi_count[counter] += check_eg(target_index, combination, enumerations, chromosomes);     
+        // cout << "counter is " << counter << ": " << epi_count[counter] << endl;
+        counter++;  
+    }
+
+    return epi_count;
+}
+
 std::vector<int> epistasis(int L, int target_index, const vector<pair<string, double>>& chromosomes)
 {
     std::vector<std::vector<std::vector<int>>> epi_set(L);

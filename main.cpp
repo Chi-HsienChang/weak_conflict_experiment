@@ -16,8 +16,8 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 
-    if (argc != 6) {
-        printf ("./main ell problem detect_eg detect_weak show_fitness\n");
+    if (argc != 7) {
+        printf ("./main problem ell detect_eg detect_epi detect_weak show_fitness\n");
         printf ("problem: \n");
         printf ("     ONEMAX         :  0\n");
         printf ("     LEADINGONES    :  1\n");
@@ -33,15 +33,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    int ell = stoi(argv[1]);
-    int problem = stoi(argv[2]);
+    int problem = stoi(argv[1]);
+    int ell = stoi(argv[2]);
     int detect_eg = stoi(argv[3]);
-    int detect_weak = stoi(argv[4]);
-    int show_fitness = stoi(argv[5]);
+    int detect_epi = stoi(argv[4]);
+    int detect_weak = stoi(argv[5]);
+    int show_fitness = stoi(argv[6]);
 
     int n = pow(2, ell);
-
-    // onemax
 
     vector<pair<string, double>> all_chromosomes;
     switch (problem) {
@@ -63,6 +62,70 @@ int main(int argc, char* argv[]) {
 
 
     auto chromosomes = sample_chromosomes(all_chromosomes, n);
+
+
+        if (detect_eg) {
+        cout << "====================" << endl;
+        cout << "EG" << endl;
+        cout << "====================" << endl;
+
+        // Step 1: 建立 ell x ell 矩陣
+        std::vector<std::vector<int>> epi_matrix(ell, std::vector<int>(ell, 0));
+
+        for (int target_index = 0; target_index < ell; target_index++) {
+            std::vector<int> epi_count_results = eg(ell, target_index, chromosomes);
+
+            for (int i = 0; i < ell; i++) {
+                epi_matrix[target_index][i] = epi_count_results[i];
+            }
+        }
+
+        // Step 0: 讓對角線為 0
+        for (int i = 0; i < ell; i++) {
+            epi_matrix[i][i] = 0;
+        }
+
+        // // Step 1: 轉置前輸出
+        // cout << "EG Matrix (before transpose):" << endl;
+        // for (int i = 0; i < ell; i++) {
+        //     for (int j = 0; j < ell; j++) {
+        //         cout << epi_matrix[i][j] << " ";
+        //     }
+        //     cout << endl;
+        // }
+        // cout << endl;
+
+        // Step 2: 轉置輸出
+        for (int i = 0; i < ell; i++) {
+            for (int j = 0; j < ell; j++) {
+                cout << epi_matrix[j][i] << " ";
+            }
+            cout << endl;
+        }
+        cout << endl;
+    }
+
+
+
+    if (detect_epi) {
+        cout << "====================" << endl;
+        cout << "Epistasis counts" << endl;
+        cout << "====================" << endl;
+
+        for (int target_index = 0; target_index < ell; target_index++) {
+            cout << "S -> " << target_index << endl;
+
+            std::vector<int> epi_count_results = epistasis(ell, target_index, chromosomes);
+            cout << "--- Epistasis ---" << endl;
+            for (int i = 1; i < epi_count_results.size(); i++) {
+                cout << "#order_" << i << ": " << epi_count_results[i] << endl;
+            }
+            cout << "-----------------" << endl;
+            cout << endl;
+        }
+        cout << endl;
+    }
+
 
     if (detect_weak) {
         cout << "====================" << endl;
@@ -104,25 +167,6 @@ int main(int argc, char* argv[]) {
         cout << endl;
     }
 
-    if (detect_eg) {
-        cout << "====================" << endl;
-        cout << "Epistasis counts" << endl;
-        cout << "====================" << endl;
-
-        for (int target_index = 0; target_index < ell; target_index++) {
-            cout << "S -> " << target_index << endl;
-
-            std::vector<int> epi_count_results = epistasis(ell, target_index, chromosomes);
-            cout << "--- Epistasis ---" << endl;
-            for (int i = 1; i < epi_count_results.size(); i++) {
-                cout << "#order_" << i << ": " << epi_count_results[i] << endl;
-            }
-            cout << "-----------------" << endl;
-            cout << endl;
-        }
-        cout << endl;
-    }
-
     if (show_fitness) {
         sort(chromosomes.begin(), chromosomes.end(), [](const auto& a, const auto& b) {
             return a.second > b.second; 
@@ -136,7 +180,7 @@ int main(int argc, char* argv[]) {
         for (const auto& chom : chromosomes) {
             cout << chom.first << " " << chom.second << endl;
             show_count++;
-            if (show_count >= 30) break;
+            if (show_count >= 100) break;
         }
         cout << endl;
     }
