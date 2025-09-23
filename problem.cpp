@@ -228,6 +228,8 @@ double calculate_fitness(const string& chromosome, const string& method) {
         // 🔑 設定亂數種子，讓實驗可重現
         static unsigned seed = std::random_device{}();
         static std::mt19937 rng(seed);
+        // static const unsigned int seed = 657013513;
+        // static std::mt19937 rng(seed);
 
         // 印出 seed，只印一次
         static bool initialized = false;
