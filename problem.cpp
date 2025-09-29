@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <random>
 #include "problem.h" 
+#include <unordered_set>
 
 using namespace std;
 
@@ -223,7 +224,7 @@ double calculate_fitness(const string& chromosome, const string& method) {
             exit(1);
         }
 
-        int num_clauses = 100;  // 子句數，可依需求調整
+        int num_clauses = 6;  // 子句數，可依需求調整
 
         // 🔑 設定亂數種子，讓實驗可重現
         static unsigned seed = std::random_device{}();
@@ -285,79 +286,106 @@ double calculate_fitness(const string& chromosome, const string& method) {
         }
 
         return static_cast<double>(sat);
-    }
-        
-    else if (method == "max3sat_unit_and_random") {
+    }else if (method == "max3sat_unit_and_random") {
         int n = chromosome.size();
-        if (n < 1) {
-            cerr << "Error: max3sat_random_unique requires chromosome size >= 1\n";
+        if (n < 3) {
+            cerr << "Error: max3sat_random requires chromosome size >= 3\n";
             exit(1);
         }
 
-        int extra_clauses = n;  // 額外隨機子句數，可自行調整
+        int num_clauses = 15;  // 子句數，可依需求調整
 
-        static unsigned seed = std::random_device{}();
-        static std::mt19937 rng(seed);
+        // // 🔑 設定亂數種子，讓實驗可重現
+        // static unsigned seed = std::random_device{}();
+        // static std::mt19937 rng(seed);
+        // // 若要固定種子以完全重現，改用下列兩行：
+        // static const unsigned int seed = 657013513;
+        // static std::mt19937 rng(seed);
 
-        static int built_n = -1;
-        static std::string target;
-        static std::vector<std::array<std::pair<int,bool>,3>> clauses;
+        // 印出 seed，只印一次
+        // static bool initialized = false;
+        // if (!initialized) {
+        //     cout << "=== Random 3SAT ===" << endl;
+        //     cout << "Seed = " << seed << endl;
+        //     initialized = true;
+        // }
 
-        if (built_n != n) {
-            built_n = n;
-            clauses.clear();
+        // std::uniform_int_distribution<int> var_dist(0, n-1);
+        // std::uniform_int_distribution<int> sign_dist(0, 1);
 
-            // === 生成唯一解 target ===
-            target.resize(n);
-            std::uniform_int_distribution<int> bit01(0, 1);
-            for (int i = 0; i < n; ++i) target[i] = bit01(rng) ? '1' : '0';
+        // // 隨機生成子句（確保同一個 clause 中變數索引不重複）
+        // static std::vector<std::array<std::pair<int,bool>,3>> clauses;
+        // if (clauses.empty()) {  // 只生成一次
+        //     clauses.reserve(num_clauses);
+        //     for (int c = 0; c < num_clauses; ++c) {
+        //         std::array<std::pair<int,bool>,3> clause;
 
-            // === 強制 unit 子句 (唯一解) ===
-            for (int i = 0; i < n; ++i) {
-                bool pos = (target[i] == '1');
-                clauses.push_back({ std::make_pair(i, pos),
-                                    std::make_pair(i, pos),
-                                    std::make_pair(i, pos) });
-            }
+        //         // 先抽 3 個不同的變數索引
+        //         std::unordered_set<int> chosen;
+        //         while (static_cast<int>(chosen.size()) < 3) {
+        //             int var = var_dist(rng);
+        //             chosen.insert(var); // set 會自動去重
+        //         }
 
-            // === 加上隨機 3 子句 ===
-            std::uniform_int_distribution<int> var_dist(0, n - 1);
-            for (int c = 0; c < extra_clauses; ++c) {
-                std::array<std::pair<int,bool>,3> cl;
-                for (int j = 0; j < 3; ++j) {
-                    int v = var_dist(rng);
-                    bool sign = bit01(rng);
-                    cl[j] = { v, sign };
-                }
-                clauses.push_back(cl);
-            }
+        //         // 將 set 內容放入 clause，並各自隨機正負號
+        //         int j = 0;
+        //         for (int var : chosen) {
+        //             bool sign = static_cast<bool>(sign_dist(rng)); // true=正, false=否定
+        //             clause[j++] = {var, sign};
+        //         }
 
-            // === 印出資訊 ===
-            cout << "=== Random 3SAT with UNIQUE optimum ===\n";
-            cout << "Seed = " << seed << "\n";
-            cout << "n = " << n 
-                << ", forced clauses = " << n 
-                << ", extra random clauses = " << extra_clauses << "\n";
-            cout << "Target = ";
-            for (char ch : target) cout << ch;
-            cout << "\n\n";
+        //         // （可選）打亂子句內文字順序，避免固定順序造成偏差
+        //         std::shuffle(clause.begin(), clause.end(), rng);
 
-            cout << "=== Clauses (CNF) ===\n";
+        //         clauses.push_back(clause);
+        //     }
+
+            // clause 支援可變長度
+// static std::vector<std::vector<std::pair<int,bool>>> clauses = {
+//     { {0,true},  {1,true},  {7,false} },
+//     { {0,false}, {1,false}, {4,true}  },
+//     { {1,true},  {2,true},  {5,false} },
+//     { {1,false}, {2,false}, {4,false} },
+//     { {2,true},  {3,true},  {0,false} },
+//     { {2,false}, {3,false}, {6,true}  },
+//     { {3,true},  {4,true},  {6,true}  },
+//     { {3,false}, {4,false}, {7,true}  },
+//     { {4,true},  {5,true},  {7,true}  },
+//     { {4,false}, {5,false}, {0,false} },
+//     { {5,true},  {6,true},  {0,false} },
+//     { {5,false}, {6,false}, {1,true}  },
+//     { {6,true},  {7,true},  {1,false} },
+//     { {6,false}, {7,false}, {5,true}  },
+//     { {0,true},  {0,true},  {0,true}  } // 最後的單文字 clause
+// };
+
+static std::vector<std::vector<std::pair<int,bool>>> clauses = {
+    { {0,true},  {2,false} ,  {2,false}},   // (x0 ∨ ¬x2)
+    { {1,false}, {2,false} , {2,false}},   // (¬x1 ∨ ¬x2)
+    { {2,true}, {2,true}, {2,true} },               // (x2)
+    { {3,true}, {3,true}, {3,true} },               // (x3)
+    { {3,false}, {4,true}, {6,false} }, // (¬x3 ∨ x4 ∨ ¬x6)
+    { {2,false}, {3,false}, {4,false} }, // (¬x2 ∨ ¬x3 ∨ ¬x4)
+    { {6,true}, {7,false}, {5,false} }, // (x6 ∨ ¬x7 ∨ ¬x5)
+    { {7,true}, {7,true}, {7,true}  }                // (x7)
+};
+
+            // 印出隨機生成的子句
             for (auto& cl : clauses) {
                 cout << "(";
-                for (int i = 0; i < 3; ++i) {
+                for (int i = 0; i < cl.size(); i++) {
                     int idx = cl[i].first;
                     bool pos = cl[i].second;
                     if (!pos) cout << "¬";
                     cout << "x" << idx;
                     if (i < 2) cout << " ∨ ";
                 }
-                cout << ")\n";
+                cout << ")" << endl;
             }
             cout << endl;
-        }
+        // }
 
-        // === 評估滿足子句數 ===
+        // 計算滿足的子句數
         int sat = 0;
         for (auto& cl : clauses) {
             bool clause_sat = false;
@@ -370,8 +398,96 @@ double calculate_fitness(const string& chromosome, const string& method) {
             }
             if (clause_sat) ++sat;
         }
+
         return static_cast<double>(sat);
     }
+
+        
+    // else if (method == "max3sat_unit_and_random") {
+    //     int n = chromosome.size();
+    //     if (n < 1) {
+    //         cerr << "Error: max3sat_random_unique requires chromosome size >= 1\n";
+    //         exit(1);
+    //     }
+
+    //     int extra_clauses = n;  // 額外隨機子句數，可自行調整
+
+    //     static unsigned seed = std::random_device{}();
+    //     static std::mt19937 rng(seed);
+
+    //     static int built_n = -1;
+    //     static std::string target;
+    //     static std::vector<std::array<std::pair<int,bool>,3>> clauses;
+
+    //     if (built_n != n) {
+    //         built_n = n;
+    //         clauses.clear();
+
+    //         // === 生成唯一解 target ===
+    //         target.resize(n);
+    //         std::uniform_int_distribution<int> bit01(0, 1);
+    //         for (int i = 0; i < n; ++i) target[i] = bit01(rng) ? '1' : '0';
+
+    //         // === 強制 unit 子句 (唯一解) ===
+    //         for (int i = 0; i < n; ++i) {
+    //             bool pos = (target[i] == '1');
+    //             clauses.push_back({ std::make_pair(i, pos),
+    //                                 std::make_pair(i, pos),
+    //                                 std::make_pair(i, pos) });
+    //         }
+
+    //         // === 加上隨機 3 子句 ===
+    //         std::uniform_int_distribution<int> var_dist(0, n - 1);
+    //         for (int c = 0; c < extra_clauses; ++c) {
+    //             std::array<std::pair<int,bool>,3> cl;
+    //             for (int j = 0; j < 3; ++j) {
+    //                 int v = var_dist(rng);
+    //                 bool sign = bit01(rng);
+    //                 cl[j] = { v, sign };
+    //             }
+    //             clauses.push_back(cl);
+    //         }
+
+    //         // === 印出資訊 ===
+    //         cout << "=== Random 3SAT with UNIQUE optimum ===\n";
+    //         cout << "Seed = " << seed << "\n";
+    //         cout << "n = " << n 
+    //             << ", forced clauses = " << n 
+    //             << ", extra random clauses = " << extra_clauses << "\n";
+    //         cout << "Target = ";
+    //         for (char ch : target) cout << ch;
+    //         cout << "\n\n";
+
+    //         cout << "=== Clauses (CNF) ===\n";
+    //         for (auto& cl : clauses) {
+    //             cout << "(";
+    //             for (int i = 0; i < 3; ++i) {
+    //                 int idx = cl[i].first;
+    //                 bool pos = cl[i].second;
+    //                 if (!pos) cout << "¬";
+    //                 cout << "x" << idx;
+    //                 if (i < 2) cout << " ∨ ";
+    //             }
+    //             cout << ")\n";
+    //         }
+    //         cout << endl;
+    //     }
+
+    //     // === 評估滿足子句數 ===
+    //     int sat = 0;
+    //     for (auto& cl : clauses) {
+    //         bool clause_sat = false;
+    //         for (auto& lit : cl) {
+    //             bool val = (chromosome[lit.first] == '1');
+    //             if ((lit.second && val) || (!lit.second && !val)) {
+    //                 clause_sat = true;
+    //                 break;
+    //             }
+    //         }
+    //         if (clause_sat) ++sat;
+    //     }
+    //     return static_cast<double>(sat);
+    // }
 
    
     std::cerr << "Error: the problem does not exist!" << std::endl;

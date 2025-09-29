@@ -182,7 +182,7 @@ int main(int argc, char* argv[]) {
         for (const auto& chom : chromosomes) {
             cout << chom.first << " " << chom.second << endl;
             show_count++;
-            if (show_count >= 2) break;
+            if (show_count >= 10) break;
         }
         cout << endl;
 
