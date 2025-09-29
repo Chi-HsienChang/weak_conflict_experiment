@@ -15,5 +15,21 @@ show_fitness
 -> 代表 solid
 ->>> 代表 dashed
 
+## 20250927
 
+./main problem ell detect_eg detect_epi detect_weak show_fitness
+problem: 
+     ONEMAX         :  0
+     LEADINGONES    :  1
+     CTRAP          :  2
+     CYCTRAP        :  3
+     CNIAH          :  4
+     LEADINGONES    :  5
+     LEADINGTRAPS   :  6
+     MAX3SAT_TEST   :  7
+     MAX3SAT_RANDOM :  8
+     1-0 CYCTRAP    :  9
 
+time ./collect_unique_max3sat_parallel.py --bin ./main2 --args 7 18 1 0 0 1 --jobs 8 --target 100 --outdir max3sat_ell_18
+
+python3 sat.py example.cnf 
