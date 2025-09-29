@@ -30,6 +30,12 @@ problem:
      MAX3SAT_RANDOM :  8
      1-0 CYCTRAP    :  9
 
+## sat 測試
+
+./main2 7 8 1 0 0 1
+
+### 只記錄找到最佳解唯一
 time ./collect_unique_max3sat_parallel.py --bin ./main2 --args 7 18 1 0 0 1 --jobs 8 --target 100 --outdir max3sat_ell_18
 
+### 測試 sat 是否最佳解唯一
 python3 sat.py example.cnf 
